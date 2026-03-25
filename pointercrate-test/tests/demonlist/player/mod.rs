@@ -70,6 +70,21 @@ async fn test_list_helper_pagination(pool: Pool<Postgres>) {
 }
 
 #[sqlx::test(migrations = "../migrations")]
+async fn test_forbidden_patch_player(pool: Pool<Postgres>) {
+    let (client, mut connection) = pointercrate_test::demonlist::setup_rocket(pool).await;
+    let player = DatabasePlayer::by_name_or_create("stardust1971", &mut connection).await.unwrap();
+
+    let user = pointercrate_test::user::add_normal_user(&mut connection).await;
+
+    client
+        .patch_player(player.id, &user, serde_json::json!({"name": "stadust"}))
+        .await
+        .expect_status(Status::Forbidden)
+        .execute()
+        .await;
+}
+
+#[sqlx::test(migrations = "../migrations")]
 async fn test_patch_player_nationality(pool: Pool<Postgres>) {
     let (client, mut connection) = pointercrate_test::demonlist::setup_rocket(pool).await;
     let player = DatabasePlayer::by_name_or_create("stardust1971", &mut connection).await.unwrap();
